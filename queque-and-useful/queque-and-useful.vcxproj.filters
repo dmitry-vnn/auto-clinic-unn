@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{a8b2aa6a-2e9e-4221-a4ba-1eaadb301044}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{323731af-7993-44b3-9fe5-ec6e72fb5659}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{dee771b1-91a2-474f-b6de-2f5f7e723bd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs">
+      <UniqueIdentifier>{55256ed5-63d2-442e-87f9-d047d71be74b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="queue.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>libs</Filter>
+    </ClInclude>
+    <ClInclude Include="patient.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="test_queue.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="queue.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="test_json.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="patient.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="test_patient.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
