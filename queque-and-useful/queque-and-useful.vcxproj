@@ -37,16 +37,33 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="client_service.h" />
+    <ClInclude Include="doctor.h" />
+    <ClInclude Include="doctor_ui.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="patient.h" />
     <ClInclude Include="queue.h" />
+    <ClInclude Include="reception_ui.h" />
+    <ClInclude Include="repository.h" />
+    <ClInclude Include="connections_service.h" />
+    <ClInclude Include="request_type.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="app.cpp" />
+    <ClCompile Include="client_service.cpp" />
+    <ClCompile Include="doctor.cpp" />
+    <ClCompile Include="doctor_ui.cpp" />
     <ClCompile Include="patient.cpp" />
     <ClCompile Include="queue.cpp" />
+    <ClCompile Include="reception_ui.cpp" />
+    <ClCompile Include="repository.cpp" />
+    <ClCompile Include="connections_service.cpp" />
+    <ClCompile Include="request_type.cpp" />
+    <ClCompile Include="test_cli_service.cpp" />
     <ClCompile Include="test_json.cpp" />
     <ClCompile Include="test_patient.cpp" />
     <ClCompile Include="test_queue.cpp" />
+    <ClCompile Include="test_conn_service.cpp" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
@@ -85,12 +102,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AssemblerOutput>All</AssemblerOutput>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

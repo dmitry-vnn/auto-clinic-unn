@@ -4,45 +4,121 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="include">
-      <UniqueIdentifier>{a8b2aa6a-2e9e-4221-a4ba-1eaadb301044}</UniqueIdentifier>
+    <Filter Include="server">
+      <UniqueIdentifier>{6b51b17c-ea27-41d4-8e0e-7ceb27038005}</UniqueIdentifier>
     </Filter>
-    <Filter Include="tests">
+    <Filter Include="client">
+      <UniqueIdentifier>{e2cd6527-798e-4f8a-85c8-300230177310}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared">
+      <UniqueIdentifier>{f59b1e9f-4cb4-4530-89c8-2d91f3ba273f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared\libs">
+      <UniqueIdentifier>{55256ed5-63d2-442e-87f9-d047d71be74b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server\tests">
       <UniqueIdentifier>{323731af-7993-44b3-9fe5-ec6e72fb5659}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src">
+    <Filter Include="server\include">
+      <UniqueIdentifier>{a8b2aa6a-2e9e-4221-a4ba-1eaadb301044}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server\src">
       <UniqueIdentifier>{dee771b1-91a2-474f-b6de-2f5f7e723bd4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="libs">
-      <UniqueIdentifier>{55256ed5-63d2-442e-87f9-d047d71be74b}</UniqueIdentifier>
+    <Filter Include="shared\include">
+      <UniqueIdentifier>{6ae69307-7718-49b1-bfa2-12766cf2d8b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared\tests">
+      <UniqueIdentifier>{5e3b15fa-2c39-4218-b6c7-36e2dd8dcf55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared\src">
+      <UniqueIdentifier>{ea512de0-2c5b-4322-80de-baa26d409e68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\include">
+      <UniqueIdentifier>{ce983453-e1c0-4003-bf11-d60a8ca9101f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\src">
+      <UniqueIdentifier>{6fde815d-5d5a-477c-9ece-c4c21439aaee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\tests">
+      <UniqueIdentifier>{632ab8f0-af6b-4254-8b9d-9c95e371ca5d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="queue.h">
-      <Filter>include</Filter>
+      <Filter>server\include</Filter>
     </ClInclude>
     <ClInclude Include="json.hpp">
-      <Filter>libs</Filter>
+      <Filter>shared\libs</Filter>
     </ClInclude>
     <ClInclude Include="patient.h">
-      <Filter>include</Filter>
+      <Filter>shared\include</Filter>
+    </ClInclude>
+    <ClInclude Include="repository.h">
+      <Filter>server\include</Filter>
+    </ClInclude>
+    <ClInclude Include="connections_service.h">
+      <Filter>server\include</Filter>
+    </ClInclude>
+    <ClInclude Include="client_service.h">
+      <Filter>client\include</Filter>
+    </ClInclude>
+    <ClInclude Include="request_type.h">
+      <Filter>shared\include</Filter>
+    </ClInclude>
+    <ClInclude Include="reception_ui.h">
+      <Filter>server\include</Filter>
+    </ClInclude>
+    <ClInclude Include="doctor_ui.h">
+      <Filter>client\include</Filter>
+    </ClInclude>
+    <ClInclude Include="doctor.h">
+      <Filter>server\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="test_queue.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="queue.cpp">
-      <Filter>src</Filter>
+      <Filter>server\tests</Filter>
     </ClCompile>
     <ClCompile Include="test_json.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="patient.cpp">
-      <Filter>src</Filter>
+      <Filter>server\tests</Filter>
     </ClCompile>
     <ClCompile Include="test_patient.cpp">
-      <Filter>tests</Filter>
+      <Filter>shared\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="queue.cpp">
+      <Filter>server\src</Filter>
+    </ClCompile>
+    <ClCompile Include="patient.cpp">
+      <Filter>shared\src</Filter>
+    </ClCompile>
+    <ClCompile Include="repository.cpp">
+      <Filter>server\src</Filter>
+    </ClCompile>
+    <ClCompile Include="connections_service.cpp">
+      <Filter>server\src</Filter>
+    </ClCompile>
+    <ClCompile Include="test_conn_service.cpp">
+      <Filter>server\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="client_service.cpp">
+      <Filter>client\src</Filter>
+    </ClCompile>
+    <ClCompile Include="test_cli_service.cpp">
+      <Filter>client\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="app.cpp" />
+    <ClCompile Include="request_type.cpp">
+      <Filter>shared\src</Filter>
+    </ClCompile>
+    <ClCompile Include="reception_ui.cpp">
+      <Filter>server\src</Filter>
+    </ClCompile>
+    <ClCompile Include="doctor_ui.cpp">
+      <Filter>client\src</Filter>
+    </ClCompile>
+    <ClCompile Include="doctor.cpp">
+      <Filter>server\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

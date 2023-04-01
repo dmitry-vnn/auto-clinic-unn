@@ -1,9 +1,10 @@
+#pragma once
+
 #include <string>
 #include <iostream>
+#include <utility>
 
 #include "json.hpp"
-
-#pragma once
 
 class State {
 
@@ -18,25 +19,22 @@ public:
 			{MEDIUM, "medium"},
 			{CRITICAL, "critical"}
 		}
-	);
-
-
+	)
 
 private:
 	Type _type;
 
 public:
-	State(Type type) : _type(type) {};
-	State(const State& state) : _type(state._type) {};
-	State& operator=(const State& type);
+	State(const Type type) : _type(type) {}
+	State(const State& state) = default;
+	State& operator=(const State& state);
 
 	std::string ToString() const;
-	Type GetType() { return _type;  };
-
+	Type GetType() const { return _type;  }
 
 public:
-	bool operator==(const State& state) const { return _type == state._type; };
-	bool operator<(const State& state) const { return _type < state._type; };
+	bool operator==(const State& state) const { return _type == state._type; }
+	bool operator<(const State& state) const { return _type < state._type; }
 
 public:
 	friend std::ostream& operator<<(std::ostream& stream, const State& state);
@@ -71,29 +69,31 @@ protected:
 	
 
 public:
-	Patient() : _state(State::NORMAL), _type(Type::PATIENT) {}; //requirement for nhlohmann:json parsing
+	Patient() : _state(State::NORMAL), _type(PATIENT) {}
 
-	Patient(const std::string& first_name, const std::string& last_name, const std::string& patronymic = "", State state = State::NORMAL);
+	Patient(std::string first_name, std::string last_name, std::string patronymic, State state = State::NORMAL);
+	Patient(std::string first_name, std::string last_name, State state = State::NORMAL) :
+		Patient(std::move(first_name), std::move(last_name), "", state) {}
 
-	Patient(const Patient& patient);
+	Patient(const Patient& patient) = default;
 	Patient& operator=(const Patient& patient);
 
-public:
-	std::string GetFirstName() const { return _first_name; };
-	std::string GetLastName() const { return _last_name; };
-	std::string GetPatronymic() const { return _patronymic; };
-
-	State GetState() const { return _state; };
-	Type GetType() const { return _type; };
+	virtual ~Patient() = default;
 
 public:
-	bool operator==(const Patient& patient) const;
-	bool operator<(const Patient& patient) const { return _state < patient._state; };
-	//bool operator<=(const Patient& patient) const { this->operator<(patient) || this->operator==(patient); };
+	std::string GetFirstName() const { return _first_name; }
+	std::string GetLastName() const { return _last_name; }
+	std::string GetPatronymic() const { return _patronymic; }
+
+	State GetState() const { return _state; }
+	Type GetType() const { return _type; }
+
+public:
+	virtual bool operator==(const Patient& patient) const;
+	bool operator<(const Patient& patient) const;
 
 public:
 	friend std::ostream& operator<<(std::ostream& stream, const Patient& patient);
-
 };
 
 
@@ -104,29 +104,54 @@ private:
 
 public:
 
-	MajorPatient() : Patient(), _money(0) { _type = Type::MAJOR_PATIENT; }; //requirement for nhlohmann:json parsing
+	MajorPatient() : Patient(), _money(0) { _type = MAJOR_PATIENT; } //requirement for nhlohmann:json parsing
 
-	MajorPatient(size_t money, const std::string& first_name, const std::string& last_name, const std::string& patronymic, State state = State::NORMAL)
-		: Patient(first_name, last_name, patronymic, state), _money(money) { _type = Type::MAJOR_PATIENT;};
+	MajorPatient(const size_t money, std::string first_name, std::string last_name, std::string patronymic, const State state = State::NORMAL)
+		: Patient(std::move(first_name), std::move(last_name), std::move(patronymic), state), _money(money) { _type = MAJOR_PATIENT;}
 
-	MajorPatient(const MajorPatient& patient) : Patient(patient), _money(patient._money) {};
+
+	MajorPatient(const size_t money, std::string first_name, std::string last_name, const State state = State::NORMAL) :
+		MajorPatient(money, std::move(first_name), std::move(last_name), "", state) {}
+
+	MajorPatient(const MajorPatient& patient) = default;
 	MajorPatient& operator=(const MajorPatient& patient);
+
+	~MajorPatient() override = default;
+
+public:
+	bool operator==(const Patient& patient) const override;
+	bool operator<(const Patient& patient) const;
 
 	size_t GetMoney() const { return _money; }
 
 public:
-	bool operator==(const MajorPatient& patient) const { return this == &patient ? true : _money != patient._money ? false : Patient::operator==(patient);  };
-	bool operator<(const MajorPatient& patient) const { return _money < patient._money ? true : patient._money < _money ? false : Patient::operator<(patient); };
+	friend std::ostream& operator<<(std::ostream& stream, const MajorPatient& majorPatient);
 
 public:
-	friend std::ostream& operator<<(std::ostream& stream, const MajorPatient& patient);
+	//Allow access to fields MajorPatient and Patient classes for "from_json" function 
+	friend void from_json(const nlohmann::json& json, Patient& patient);
+
+};
+
+class PatientConvertError : public std::exception
+{
+public:
+	explicit PatientConvertError(char const* message): exception(message) {}
+};
+
+class PatientConverter
+{
 
 public:
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(MajorPatient, _money)
+	static std::string Convert(const std::unique_ptr<const Patient>& patient);
+	static std::unique_ptr<Patient> Build(const std::string& str);
+
+
 };
 
 void to_json(nlohmann::json& json, const Patient& patient);
 void from_json(const nlohmann::json& json, Patient& patient);
 
-void to_json(nlohmann::json& json, const MajorPatient& patient);
-void from_json(const nlohmann::json& json, MajorPatient& patient);
+void to_json(nlohmann::json& json, const std::unique_ptr<const Patient>& patient);
+//void from_json(const nlohmann::json& json, std::unique_ptr<Patient>& patient);
+

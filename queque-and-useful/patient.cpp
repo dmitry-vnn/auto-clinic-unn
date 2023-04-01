@@ -1,5 +1,7 @@
 #include "patient.h"
 
+#include <utility>
+
 State& State::operator=(const State& state)
 {
     if (this != &state) {
@@ -11,24 +13,21 @@ State& State::operator=(const State& state)
 
 std::string State::ToString() const
 {
+
     switch (_type)
     {
-        case State::NORMAL: {
+        case NORMAL: {
             return "NORMAL";
-            break;
         }
-        case State::MEDIUM: {
+        case MEDIUM: {
             return "MEDIUM";
-            break;
         }
-        case State::CRITICAL: {
+        case CRITICAL: {
             return "CRITICAL";
-            break;
-        }
-        default: {
-            throw "Not handling state";
         }
     }
+
+    throw std::logic_error("State not handling");
 }
 
 
@@ -43,30 +42,21 @@ std::ostream& operator<<(std::ostream& stream, const State& state)
 }
 
 
-Patient::Patient(const std::string& first_name, const std::string& last_name, const std::string& patronymic, State state) :
-    _first_name(first_name),
-    _last_name(last_name),
-    _patronymic(patronymic),
+Patient::Patient(std::string first_name, std::string last_name, std::string patronymic, const State state) :
+    _first_name(std::move(first_name)),
+    _last_name(std::move(last_name)),
+    _patronymic(std::move(patronymic)),
     _state(state),
-    _type(Type::PATIENT)
-{
-}
-
-Patient::Patient(const Patient& patient) :
-    _first_name(patient._first_name),
-    _last_name(patient._last_name),
-    _patronymic(patient._patronymic),
-    _state(patient._state),
-    _type(patient._type)
+    _type(PATIENT)
 {
 }
 
 Patient& Patient::operator=(const Patient& patient)
 {
     if (this != &patient) {
-        _first_name = patient._first_name,
-        _last_name = patient._last_name,
-        _patronymic = patient._patronymic,
+        _first_name = patient._first_name;
+        _last_name = patient._last_name;
+        _patronymic = patient._patronymic;
         _state = patient._state;
         _type = patient._type;
     }
@@ -86,6 +76,16 @@ bool Patient::operator==(const Patient& patient) const
         _type == patient._type
             
     );
+}
+
+bool Patient::operator<(const Patient& patient) const
+{
+    if (patient.GetType() == MAJOR_PATIENT)
+    {
+        const auto& major = dynamic_cast<const MajorPatient&>(patient);
+        return !(major.operator<(*this));
+    }
+    return _state < patient._state;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Patient& patient)
@@ -132,33 +132,110 @@ MajorPatient& MajorPatient::operator=(const MajorPatient& patient)
     return *this;
 }
 
+bool MajorPatient::operator==(const Patient& patient) const
+{
+	if (patient.GetType() == MAJOR_PATIENT)
+	{
+        const auto& major = dynamic_cast<const MajorPatient&>(patient);
+        if (major.GetMoney() != GetMoney())
+        {
+            return false;
+        }
+	}
+
+    return Patient::operator==(patient);
+}
+
+bool MajorPatient::operator<(const Patient& patient) const
+{
+    if (patient.GetType() == MAJOR_PATIENT) {
+
+        size_t money = dynamic_cast<const MajorPatient&>(patient).GetMoney();
+
+        if (GetMoney() == money)
+        {
+            return GetState() < patient.GetState();
+        }
+
+        return GetMoney() < money;
+    }
+
+    return GetState() < patient.GetState();
+}
+
+std::string PatientConverter::Convert(const std::unique_ptr<const Patient>& patient)
+{
+    return nlohmann::json(std::move(patient)).dump();
+}
+
+std::unique_ptr<Patient> PatientConverter::Build(const std::string& str)
+{
+    const auto& json = nlohmann::json::parse(str);
+
+    if (json["type"] == MAJOR_PATIENT)
+    {
+        const MajorPatient& p = json;
+        return std::make_unique<MajorPatient>(p);
+    }
+
+    const Patient& p = json;
+    return std::make_unique<Patient>(p);
+}
+
 void to_json(nlohmann::json& json, const Patient& patient)
 {
-    json = {
-        {"firstName", patient.GetFirstName()},
-        {"lastName", patient.GetLastName()},
-        {"patronymic", patient.GetPatronymic()},
-        {"state", patient.GetState().GetType()},
-        {"type", patient.GetType()},
-    };
+    try
+    {
+    	json = {
+            {"firstName", patient.GetFirstName()},
+            {"lastName", patient.GetLastName()},
+            {"patronymic", patient.GetPatronymic()},
+            {"state", patient.GetState().GetType()},
+            {"type", patient.GetType()}
+        };
+
+        if (patient.GetType() == MAJOR_PATIENT) {
+            const auto& major = dynamic_cast<const MajorPatient&>(patient);
+            json["money"] = major.GetMoney();
+        }
+
+    } catch (const nlohmann::json::exception& exception)
+    {
+        throw PatientConvertError(exception.what());
+    }
 
 }
 
 void from_json(const nlohmann::json& json, Patient& patient)
 {
-    patient = Patient(json["firstName"], json["lastName"], json["patronymic"], State(json["state"]));
+	try
+	{
+
+        patient = Patient(json["firstName"], json["lastName"], json["patronymic"], State(json["state"]));
+
+        if (json["type"] == MAJOR_PATIENT) {
+            auto& major = dynamic_cast<MajorPatient&>(patient);
+
+            major._money = json["money"];
+            major._type = MAJOR_PATIENT;
+        }
+
+	}
+    catch (const nlohmann::json::exception& exception)
+    {
+        throw PatientConvertError(exception.what());
+    }
+
 }
 
-void to_json(nlohmann::json& json, const MajorPatient& patient)
+void to_json(nlohmann::json& json, const std::unique_ptr<const Patient>& patient)
 {
-
-    to_json(json, *static_cast<const Patient*>(&patient));
-    json["money"] = patient.GetMoney();
-
+    if (patient->GetType() == MAJOR_PATIENT)
+    {
+        to_json(json, *dynamic_cast<const MajorPatient*>(patient.get()));
+    } else
+    {
+        to_json(json, *patient);
+    }
 }
 
-void from_json(const nlohmann::json& json, MajorPatient& patient)
-{
-    from_json(json, *static_cast<Patient*>(&patient));
-    patient._money = json["money"];
-}

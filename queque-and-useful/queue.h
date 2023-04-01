@@ -13,30 +13,42 @@ enum class Order {
 template <class T, Order ORDER = Order::UNORDERED>
 class Queue {
 	
+
 private:
-	T* data;
-	size_t size;
+	
+	std::conditional_t<ORDER == Order::ORDERED, std::pair<size_t, T>*, T*> _data;
+	size_t _size;
 
-	size_t first_index;
-	size_t after_last_index;
+	size_t _firstIndex;
+	size_t _afterLastIndex;
 
-	size_t count_of_elements;
+	size_t _countOfElements;
+
+	size_t _absoluteLastElementPosition;
 
 public:
-	explicit Queue(size_t initial_capacity = 10);
+	explicit Queue(size_t initialCapacity = 10);
 	explicit Queue(std::initializer_list<T> list);
 	~Queue();
 
 public:
 
-	void Push(const T& element);
-	inline bool IsFull() const;
+	void Push(T element);
+	bool IsFull() const;
+
+	Queue& operator+=(T element);
 
 	T Pop();
-	inline bool IsEmpty() const;
+	bool IsEmpty() const;
+
+	size_t Size() const { return _countOfElements; }
+
+	void Clear() { _firstIndex = _afterLastIndex = _countOfElements = _absoluteLastElementPosition = 0; }
 
 	template <class T, Order ORDER>
 	friend std::ostream& operator<<(std::ostream& stream, const Queue<T, ORDER>& queue);
+
+
 
 public:
 
@@ -45,105 +57,214 @@ public:
 
 private:
 
-	static bool compare(const T& right, const T& left);
+	static bool Compare(const std::pair<size_t, T>& right, const std::pair<size_t, T>& left);
+	size_t BinarySearchIndexForInsertElement(const std::pair<size_t, T>& element);
 
 };
 
 template<class T, Order ORDER>
-inline Queue<T, ORDER>::Queue(size_t initial_capacity) :
-	size(initial_capacity),
-	data(new T[initial_capacity]),
-	first_index(0),
-	after_last_index(0),
-	count_of_elements(0)
+Queue<T, ORDER>::Queue(const size_t initialCapacity) :
+	_size(initialCapacity),
+	_firstIndex(0),
+	_afterLastIndex(0),
+	_countOfElements(0),
+	_absoluteLastElementPosition(0)
 {
+	if constexpr (ORDER == Order::ORDERED)
+		_data = new std::pair<size_t, T>[_size];
+	else
+		_data = new T[_size];
 }
 
 template<class T, Order ORDER>
-inline Queue<T, ORDER>::Queue(std::initializer_list<T> list) :
-	size(list.size()),
-	first_index(0),
-	after_last_index(0),
-	count_of_elements(list.size())
+Queue<T, ORDER>::Queue(std::initializer_list<T> list) :
+	_size(list.size()),
+	_firstIndex(0),
+	_afterLastIndex(0),
+	_countOfElements(list.size()),
+	_absoluteLastElementPosition(0)
 {
-	data = new T[size];
-	std::copy(list.begin(), list.end(), data);
+	if constexpr (ORDER == Order::ORDERED) {
+		_data = new std::pair<size_t, T>[_size];
+		
+		for (size_t i = 0; i < _size; i++)
+		{
+			_data[i] = std::make_pair( i, std::move(list.begin()[i]) );
+		}
 
-	if (ORDER == Order::ORDERED) {
-		std::sort(data, data + size, compare);
+		std::sort(_data, _data + _size, Compare);
 	}
+	else {
+		_data = new T[_size];
+		std::copy(list.begin(), list.end(), _data);
+	}
+
 }
 
 template<class T, Order ORDER>
-inline Queue<T, ORDER>::~Queue()
+Queue<T, ORDER>::~Queue()
 {
-	delete[] data;
-	data = nullptr;
+	delete[] _data;
+	_data = nullptr;
 }
 
 template<class T, Order ORDER>
-inline void Queue<T, ORDER>::Push(const T& element)
+void Queue<T, ORDER>::Push(T element)
 {
-	if (count_of_elements < size) {
-		data[after_last_index] = element;
+	if (!IsFull()) {
 
-		after_last_index = (after_last_index + 1) % size;
+		if constexpr (ORDER == Order::ORDERED) {
+			std::pair<size_t, T> pair = std::make_pair(++_absoluteLastElementPosition, std::move(element));
+			size_t afterInsertIndex = IsEmpty() ? _afterLastIndex : BinarySearchIndexForInsertElement(pair);
+			
+			if (afterInsertIndex == _afterLastIndex) {
+				_data[_afterLastIndex] = std::move(pair);
+				_afterLastIndex = (_afterLastIndex + 1) % _size;
+			}
+			else if (afterInsertIndex == _firstIndex) {
+				_firstIndex = _firstIndex == 0 ? _size - 1 : _firstIndex - 1;
+				_data[_firstIndex] = std::move(pair);
+			}
+			else {
+			
+				size_t startCopyIndex = _afterLastIndex;
+			
+				while (startCopyIndex != afterInsertIndex)
+				{
+					size_t beforeStartCopyIndex = startCopyIndex == 0 ? _size - 1 : startCopyIndex - 1;
+					
+					_data[startCopyIndex] = std::move(_data[beforeStartCopyIndex]);
+			
+					startCopyIndex = beforeStartCopyIndex;
+				}
+				_data[afterInsertIndex] = std::move(pair);
+			
+				_afterLastIndex = (_afterLastIndex + 1) % _size;
+			}
 
-		count_of_elements++;
+		}
+		else {
+			_data[_afterLastIndex] = std::move(element);
+			_afterLastIndex = (_afterLastIndex + 1) % _size;
+		}
+
+		_countOfElements++;
 	}
 	//else queue overflow -> do nothing
 }
 
 template<class T, Order ORDER>
-inline bool Queue<T, ORDER>::IsFull() const
+bool Queue<T, ORDER>::IsFull() const
 {
-	return count_of_elements == size;
+	return _countOfElements == _size;
+}
+
+template <class T, Order ORDER>
+Queue<T, ORDER>& Queue<T, ORDER>::operator+=(T element)
+{
+	Push(std::move(element));
+	return *this;
 }
 
 template<class T, Order ORDER>
-inline T Queue<T, ORDER>::Pop()
+T Queue<T, ORDER>::Pop()
 {
-	if (count_of_elements > 0) {
-		const T& element = data[first_index];
-
-		first_index = (first_index + 1) % size;
+	if (!IsEmpty()) {
 		
-		count_of_elements--;
+		_countOfElements--;
 
-		return element;
+		if constexpr (ORDER == Order::ORDERED)
+		{
+			auto patient = std::move(_data[_firstIndex].second);
+			_firstIndex = (_firstIndex + 1) % _size;
+			return std::move(patient);
+		}
+		else
+			return _data[_firstIndex];
 	}
-	//else empty queue -> do nothing
+
+	throw std::logic_error("Queue is empty");
 }
 
 template<class T, Order ORDER>
-inline bool Queue<T, ORDER>::IsEmpty() const
+bool Queue<T, ORDER>::IsEmpty() const
 {
-	return count_of_elements == 0;
+	return _countOfElements == 0;
 }
 
 template<class T, Order ORDER>
-bool Queue<T, ORDER>::compare(const T& right, const T& left)
+bool Queue<T, ORDER>::Compare(const std::pair<size_t, T>& right, const std::pair<size_t, T>& left)
+{	
+	auto& n1 = right.first;
+	auto& e1 = right.second;
+	
+	auto& n2 = left.first;
+	auto& e2 = left.second;
+	
+	if (e1 < e2) {
+		return false;
+	}
+	
+	if (e2 < e1) {
+		return true;
+	}
+	
+	return n1 < n2;
+}
+
+template<class T, Order ORDER>
+size_t Queue<T, ORDER>::BinarySearchIndexForInsertElement(const std::pair<size_t, T>& element)
 {
-	return right < left;
+	
+	int startIndex = 0;
+	int endIndex = _countOfElements - 1;
+	
+	do {
+		size_t midIndex = (startIndex + endIndex) / 2;
+	
+		size_t midIndexCyclic = (midIndex + _firstIndex) % _size;
+	
+		//buffer contains only unique elements !! - pair for different places in queue, as idea
+	
+		if (Compare(element, _data[midIndexCyclic])) {
+			endIndex = midIndex - 1;
+		}
+		else {
+			startIndex = midIndex + 1;
+		}
+	
+	}
+	
+	while (endIndex >= startIndex);
+	
+	return (startIndex + _firstIndex) % _size; //always >= 0
+
 }
 
 template<class T, Order ORDER>
 std::ostream& operator<<(std::ostream& stream, const Queue<T, ORDER>& queue)
 {
 	stream << "[";
-
+	
 	size_t count = 0;
-
-	while (count < queue.count_of_elements) {
-		stream << queue.data[(queue.first_index + count) % queue.size];
+	
+	while (count < queue._countOfElements) {
+	
+		const auto& element = queue._data[(queue._firstIndex + count) % queue._size];
+		if constexpr (ORDER == Order::ORDERED) {
+			stream << element.second;
+		}
+		else {
+			stream << element;
+		}
 		
-		if (count < queue.count_of_elements - 1) {
+		if (count < queue._countOfElements - 1) {
 			stream << ", ";
 		}
-
+	
 		count++;
 	}
-
+	
 	stream << "]";
 
 	return stream;
